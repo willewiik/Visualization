@@ -1,0 +1,647 @@
+---
+title: "Assignment 2"
+author:
+- Duc Tran
+- William Wiik
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document: default
+  pdf_document: default
+header-includes:
+  - \usepackage{caption}
+---
+\captionsetup[table]{name = Table}
+\setcounter{table}{0}
+\captionsetup[figure]{name = Figure}
+\setcounter{figure}{0}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(plotly)
+library(MASS)
+library(grid)
+library(gridExtra)
+library(readxl)
+library(dplyr)
+```
+
+# Task 1
+
+The data material in this task is loaded into R with the following code:
+```{r}
+# Omits the first column containing observation number
+df_olive <- read.csv("olive.csv")[, -1]
+```
+
+
+## 1.1 
+
+In figure 1 the dependence of Palmitic on Oleic is presented in a scatter plot. The observations are also colored by the continuous values of Linoleic.
+
+```{r echo = FALSE, fig.cap = "\\label{} Figure 1: Scatter plot for Palmitic and Oleic colored by values of Linoleic"}
+ggplot(df_olive) +
+  geom_point(aes(x = oleic, y = palmitic, color = linoleic)) + 
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5))
+```
+
+
+In figure 1 it easy to spot the correlation bethween Palmitic and Oleic, where it appears that there is a negative correlation. However you should also take into account the value of Linoleic.  There appears to be a small positive correlation between Palmitic and Linoleic, which means that lower values of Palmitic also indicate lower values of Linoleic. The dependency of Palmitic on Oleic is therefore hard to distinguish.
+
+
+
+Figure 2 presents the same scatter plot as figure 1, however Linoleic has been discretised into four classes. 
+
+```{r echo = FALSE, fig.cap = "\\label{} Figure 2: Scatter plot for Palmitic and Oleic colored by discrete classes of Linoleic"}
+df_olive$linoleic_classes <- cut_interval(df_olive$linoleic, n=4)
+levels(df_olive$linoleic_classes) <- c("[448,704]", "(704,959]", 
+                                       "(959,1210]", "(1210,1470]")
+ggplot(df_olive) +
+  geom_point(aes(x = oleic, y = palmitic, color = linoleic_classes)) + 
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5)) +
+  labs(color="linoleic classes")  
+```
+
+In figure 2 it is easier to distinguish the the dependence of Palmitic on Oleic, where there is a negative correlation in all classes. However we lose the information of the actual values of Linoleic for each point. 
+
+The perception problem between figure 1 and figure 2 is that figure 1 requires a more attentive processing to determine the dependency of Palmitic on Oleic. Figure 2 the dependency can be seen with a preattentive processing. 
+
+## 1.2
+
+Figure 3 and 4 presents similar scatter plots as figure 2 where the mapping of the discretised Linoleic is different. In figure 3 the mapping is size of the points instead of hue and in figure 4 the mapping is orientation angle. 
+
+
+```{r echo = FALSE, fig.cap = "\\label{} Figure 3: Scatter plot for Palmitic and Oleic with sizes of points defined by discrete classes of Linoleic"}
+ggplot(df_olive) +
+  geom_point(aes(x = oleic, 
+                 y = palmitic,
+                 size = linoleic_classes), 
+             alpha = 0.5) + 
+  scale_size_manual(values = c(1, 2, 3, 4)) +  
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5)) +
+  labs(size="linoleic classes")  
+```
+
+In figure 3 the sizes of the points does not represent the actual values of the classes, however we have chosen this on purpose to be able to easier distinguish different classes. There is a lot of overlapping between points, this makes it difficult differentiate classes. 
+
+
+```{r echo = FALSE, fig.cap = "\\label{} Figure 4: Scatter plot for Palmitic and Oleic with orientation of points defined by discrete classes of Linoleic"}
+ggplot(df_olive, aes(x = oleic, y = palmitic)) +
+geom_point() +
+  geom_spoke(aes(angle = as.numeric(linoleic_classes)), radius = 30) +
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5)) 
+```
+
+In figure 4 we found it difficult to distinguish classes of Linoleic, especially for values of Oleic around 7000 and Palmitic around 1350. 
+
+
+Comparing figure 2, 3 and 4 we found it most difficult to pre-attentively differentiate between classes in figure 4 followed by figure 3. In figure 2,3 and 4 there are 4 different levels for Lineolic, the number of bits needed to decode this variable is: $log_2(4)=2$ bits. 
+
+Some metrics for how many bits that is possible to distinguish for each variable are as follows:
+
+* Color: 3.1 bits 
+* Size: 2.2 bits
+* Orientation: 3 bits
+
+According to the metrics it is possible to distinguish the variable Linoleic. 
+
+## 1.3
+
+Figure 5 presents a scatterplot of Oleic and Eicosenoic and the points are colored by region.  
+
+```{r echo = FALSE, fig.cap = "\\label{} Figure 5: Scatter plot for Oleic and Eicosenoic with color of points defined by numerical values of region"}
+ggplot(df_olive) +
+  geom_point(aes(x = oleic, y = eicosenoic, color = Region)) + 
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5))
+```
+
+In figure 5 the variable Region is colored by the numerical values, however the variable should be used as categoric. 
+
+
+Figure 6 presents the same scatter plot as figure 5, however the variable Region is used as a categorical variable instead of continuous variable.
+
+```{r echo = FALSE, fig.cap = "\\label{} Figure 6: Scatter plot for Oleic and Eicosenoic with color of points defined by categorical values of region"}
+ggplot(df_olive) +
+  geom_point(aes(x = oleic, y = eicosenoic, color = as.factor(Region))) + 
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5)) +
+  labs(color="Region")  
+```
+
+In figure 6 the decision boundaries are identified almost instantly. This is possible due to the preattentive mechanism. 
+
+## 1.4
+
+In this task the variables Oleic, Eicosenoic and Linoleic have been discretised into 3 different groups individually. A scatter plot of the variables are presented in figure 7. 
+
+```{r echo = FALSE, warning = FALSE, fig.cap = "\\label{} Figure 7: Scatter plot for Oleic and Eicosenoic with color of points defined by discretised values of Linoleic"}
+df_olive$linoleic_classes <- cut_interval(df_olive$linoleic, n=3)
+df_olive$palmitic_classes <- cut_interval(df_olive$palmitic, n=3)
+df_olive$palmitoleic_classes <- cut_interval(df_olive$palmitoleic, n=3)
+
+levels(df_olive$palmitic_classes) <- c("[610,991]", "(991,1370]", "(1370,1750]")
+levels(df_olive$linoleic_classes) <- c("[448,789]", "(789,1130]","(1130,1470]")
+
+
+ggplot(df_olive) +
+  geom_point(aes(x = oleic,
+                 y = eicosenoic,
+                 color = linoleic_classes,
+                 shape = palmitic_classes,
+                 size = palmitoleic_classes)) + 
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5)) +
+  labs(color = "linoleic classes",
+       shape = "palmitic classes",
+       size = "palmitoleic classes")  
+```
+
+In figure 7 it is hard to preattentively distinguish different combination of groups from each other. It is somewhat possible to attentively distinguish the groups, however it is not accurate. Our perception to perceive a figure is dependent on the channel capacity (the amount of bits in a figure that we can perceive). In this figure there are 3 variables with 3 levels each, the amount of bits in this figure is: $log_2(3) + log_2(3) + log_2(3) \approx 4,75$. We could not find the channel capacity for our combination of levels for variables, however comparing a figure containing size, brightness and hue the maximum channel capacity is 4,1 bits. This can explain why it is hard for us to distinguish a figure with 4,75 bits. 
+
+
+## 1.5
+
+In figure 8 a scatterplot of the variables Oleic and Eicosenoic are presented. The points are defined by discrete values of Region. 
+
+```{r echo = FALSE, warning = FALSE, fig.cap = "\\label{} Figure 8: Scatter plot for Oleic and Eicosenoic with color of points defined by discretised values of Region"}
+ggplot(df_olive) +
+  geom_point(aes(x = oleic,
+                 y = eicosenoic,
+                 color = as.factor(Region),
+                 shape = palmitic_classes,
+                 size = palmitoleic_classes)) + 
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5)) +
+  labs(color = "Region",
+       shape = "palmitic classes",
+       size = "palmitoleic classes")  
+```
+
+Treisman's theory is that the perception of a figure is proccessed parallell by their individual features. In this task our perception of the picture can be divided into these three features: colour, size and shape. Similar to figure 2, we can preattentively distinguish groups by colour. But similar to figure 7 it is hard to attentively distinguish different groups when combinatining all variables. 
+
+
+Treisman's theory is that a picture can be divided into different feature maps, such as hue, orientation, contrast, size and luminance. For hue the maps can primarily be divided into blue, yellow, green and red. These maps can be processed parallel and preattentively. In figure 8 the decision boundary can be distinguished by hue (red, green and blue) and not the size or shape of the observations, therefore the decision boundary for region can be identified preattentively. 
+
+
+## 1.6
+
+The proportion of oils from different areas are presented in figure 9. 
+
+```{r echo = FALSE, warning = FALSE, fig.cap = "\\label{} Figure 9: Pie chart over proportion of oils from different areas"}
+# Create dataframe for plotly
+df_olive$Area <- as.factor(df_olive$Area)
+data_plotly <- as.data.frame(table(df_olive$Area))
+colnames(data_plotly) <- c("Region", "Freq")
+
+
+plot_ly(data = data_plotly,
+        labels = ~Region,
+        values = ~Freq, 
+        showlegend = F,
+        textinfo = "none") %>%
+  add_pie()
+```
+
+In figure 9 all the labels are hidden. When comparing groups in a pie chart the angle or area of a pie could be used. There are in total 9 different areas, where 2 areas have the same value on proportion. Figure 9 contains therefore 8 different sizes of pies.A metric on how many different sizes of squares humans can accurately perceive is between 4 and 5. This should apply to pies as well, meaning 8 different sizes of pies will be hard to accurately perceive.
+Both angle and area are harder to perceive than for example length, therefore a bar chart would have been better.
+
+## 1.7
+
+A 2d-density contour plot of Linoleic and Eicosenoic and the scatterplot of the variables are presented in figure 10.
+
+
+```{r echo = FALSE, warning = FALSE, fig.cap = "\\label{} Figure 10: To the left: 2d-density contour plot of Linoleic and Eicosenoic. To the right: a scatter plot of Linoleic and Eicosenoic."}
+p1 <- 
+  ggplot(df_olive, aes(x = linoleic, y = eicosenoic)) +
+  geom_density_2d() +
+  theme_bw() +
+  scale_y_continuous(limits=c(0,60))
+
+p2 <-
+  ggplot(df_olive, aes(x = linoleic, y = eicosenoic), alpha = 0.5) +
+  geom_point() +
+  theme_bw() +
+  scale_y_continuous(limits=c(0,60))
+
+
+plot_list = list(p1, p2)
+
+# Layout to plot
+layout_matrix <- rbind(c(1,2))
+grid.arrange(grobs=plot_list[1:2], layout_matrix=layout_matrix)
+```
+
+The 2d-density contour plot in figure 10 can be misleading. For example the oval around values 11 to 13 for Eicosenoic and 850 to 900 for Linoleic can either show that it is higher or lower density inside the oval than outside. Our initial thought was that inside the oval had a higher density, however when comparing with the scatter plot it appears that the density is in fact lower. From the density plot it can be misinterpreted that all points are inside the density regions, compared to the scatter plot we can identify at least 4 points outside the density region. 
+
+# Task 2
+
+The data set in this task contains 28 variables for 30 baseball teams in USA from 2016. The abbreviation of the variables are used, the full name of the variables can be found in Appendix A. 
+
+## 2.1
+
+The data in this task is loaded into R with the code as follows. 
+
+```{r, echo}
+df_baseball <- read_xlsx("baseball-2016.xlsx")
+colnames(df_baseball)[10] <- "TwoB"
+colnames(df_baseball)[11] <- "ThreeB"
+```
+
+
+The numerical variables in the data material contains values of different ranges. We assumed that all variables are equally important, therefore all the numerical values needs to be scaled. 
+
+
+## 2.2 
+
+A non-metric MDS with Minkowski distance set to 2 is used on the data to reduce the distance between teams into two dimensions. The result is presented in figure 11. 
+
+```{r echo = FALSE, warning = FALSE, fig.cap = "\\label{} Figure 11: non-metric MDS of baseball teams in two different leagues"}
+df_baseball[ , 3:28] <- scale(df_baseball[ , 3:28])
+
+d <- dist(df_baseball[, 3:28], method = "minkowski", p=2)
+res <- isoMDS(d,k=2, p=2, trace=FALSE)
+coords <- res$points
+
+coordsMDS <- as.data.frame(coords)
+coordsMDS$name <- rownames(coordsMDS)
+coordsMDS$team <- df_baseball$Team
+coordsMDS$league <- df_baseball$League
+
+plot_ly(coordsMDS, 
+        x=~V1, 
+        y=~V2, 
+        type="scatter",
+        hovertext=~team,
+        color= ~league,
+        colors = "Set2",
+        mode= "markers") %>% 
+  layout(legend = list(title=list(text="League")),
+         xaxis = list(title = "Dimension 1"),
+         yaxis = list(title = "Dimension 2"))
+```
+
+In figure 11 for dimension 1 there appears to be a larger variation for the league NL compared to AL. For dimension 2 the league AL appears to have higher values compared to NL. The dimension 2 appears to best differentiate between the leagues. The Boston Red Sox appears to be an outlier.
+
+## 2.3
+
+A Shepards plot for the MDS from task 2.2 is presented in figure 12. 
+
+```{r echo = FALSE, warning = FALSE, fig.cap = "\\label{} Figure 12: Shepards plot"}
+sh <- Shepard(d, coords)
+delta <-as.numeric(d)
+D<- as.numeric(dist(coords))
+
+n=nrow(coords)
+index=matrix(1:n, nrow=n, ncol=n)
+index1=as.numeric(index[lower.tri(index)])
+
+n=nrow(coords)
+index=matrix(1:n, nrow=n, ncol=n, byrow = T)
+index2=as.numeric(index[lower.tri(index)])
+
+
+
+plot_ly()%>%
+  add_markers(x=~delta, y=~D, hoverinfo = 'text',
+              text = ~paste('Obj1: ', df_baseball$Team[index1],
+                            '<br> Obj 2: ', df_baseball$Team[index2]))%>%
+  #if nonmetric MDS inolved
+  add_lines(x=~sh$x, y=~sh$yf)
+```
+
+In figure 12 the observation pairs:
+
+* Minnesota Twins and Arizona Diamondbacks
+
+* Oakland Athletics and Milwaukee Brewers
+
+* NY Mets and Minnesota Twins
+
+appears to be hard for the MDS to map successfully. In a shepard plot the value $D$ is the distance between variables in the data and the value $delta$ is the distance from the non-metric MDS. A good shepards plot would have almost all values of $d$ and $delta$ close to each other. 
+For the observation pair Oakland Athletics and Milwaukee Brewers the distance $D$ in the original data is around 2 and the distance $delta$ is around 8. The non-metric MDS could not map these pair of observation great. Overall from the shepards plot most pairs are matched good. 
+
+
+## 2.4
+
+A scatter plot between the dimension 2 from the non-metric MDS with all the variables are presented in Appendix B. The variable that appears to have highest positive correlation with dimension 2 is Home run per game. The variable that appears to have the highest negative correlation with dimension 2 is Sacrifice hits. Our findings on google are that a home run is good for a team whereas Sacrifice hits is a tactical choice in a game. From our understanding Sacrifice hits ensures a lower amount of points than a home run, but more points than being striked out.
+
+For dimension 2 the larger positive values indicates a team hitting more homeruns and larger negative values indicates a team going for more sacrifice hits. Dimension 2 appears to describe the types of hits a team goes for.  
+
+
+
+
+## Statement of Contribution
+The result of the assignment is a combination of both our results. 
+
+### Task 1
+
+We both solved the task separately, then compared and combined our results.
+For task 1.6 and 1.7 we used solution from Duc. 
+
+### Task 2
+
+We both solved the task separately, then compared and combined our results.  
+For task 2.2 and 2.3 we used solution from William. 
+
+
+## Appendix 
+
+In appendix A a table description of variables in task 2 is presented. Appendix B shows plots used in task 2.4. In appendix C the R code used for this assignment is presented. 
+
+
+### Appendix A
+
+```{r, echo=FALSE}
+Abbrevation <- c("Won", "Lost", "Runs.per.game", "HR.per.game", "At bats",
+           "Runs", "Hits", "TwoB", "ThreeB", "HR", "RBI", "StolenB",
+           "CaughtS", "BB", "SO", "BAvg", "OBP", "SLG", "OPS", "TB",
+           "GDP", "HBP", "SH", "SF", "IBB", "LOB")
+
+Description <- c("Games won", "Games lost", "Runs per game", "Home runs per game",
+                 "AB", "Runs", "Hits", "Doubles", "Triples", "Home runs", 
+                 "Runs batted in", "Bases stolen", "Time caught stealing",
+                 "Bases on balls", "Strikeout", "Hits/At bats", "On base percentage",
+                 "Slugging percentage", "On base + slugging", "Total bases",
+                 "Double plays grounded into", "Times hit by pitch", 
+                 "Sacrifice hits", "Sacrifice flies", "Intentional base on balls",
+                 "Runners left on base")
+table <- data.frame(Abbrevation, Description)
+knitr::kable(table)
+```
+
+### Appendix B
+
+```{r, echo=FALSE, warning=FALSE}
+df_baseball$V2 <- coordsMDS$V2
+plot_data <- df_baseball[, c(-1,-2)]
+
+plot_var <- function(y1){
+  plot <- 
+    ggplot(plot_data, aes_string(x="V2", y=y1)) + 
+    geom_point() +
+    xlab("Dimension 2") +
+    theme_bw() 
+  return(plot)
+}
+
+plot_list <- vector("list", 26)
+for(index in 1:26){
+  plot_list[[index]] <- plot_var(names(plot_data)[index])
+}
+
+
+layout_matrix <- layout_matrix <- rbind(c(1,2),
+                                        c(3,4))
+grid.arrange(grobs=plot_list[1:4],
+             layout_matrix=layout_matrix)
+
+grid.arrange(grobs=plot_list[5:8],
+             layout_matrix=layout_matrix)
+
+grid.arrange(grobs=plot_list[9:12],
+             layout_matrix=layout_matrix)
+
+grid.arrange(grobs=plot_list[13:16],
+             layout_matrix=layout_matrix)
+
+grid.arrange(grobs=plot_list[17:20],
+             layout_matrix=layout_matrix)
+
+grid.arrange(grobs=plot_list[21:24],
+             layout_matrix=layout_matrix)
+
+grid.arrange(grobs=plot_list[25:26],
+             layout_matrix=layout_matrix)
+```
+
+### Appendix C
+
+```{r, eval=FALSE}
+# Task 1.1
+
+# Omits the first column containing observation number
+df_olive <- read.csv("olive.csv")[, -1]
+
+ggplot(df_olive) +
+  geom_point(aes(x = oleic, y = palmitic, color = linoleic)) + 
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5))
+
+df_olive$linoleic_classes <- cut_interval(df_olive$linoleic, n=4)
+levels(df_olive$linoleic_classes) <- c("[448,704]", "(704,959]", 
+                                       "(959,1210]", "(1210,1470]")
+
+ggplot(df_olive) +
+  geom_point(aes(x = oleic, y = palmitic, color = linoleic_classes)) + 
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5)) +
+  labs(color="linoleic classes") 
+
+# Task 1.2
+ggplot(df_olive) +
+  geom_point(aes(x = oleic, 
+                 y = palmitic,
+                 size = linoleic_classes), 
+             alpha = 0.5) + 
+  scale_size_manual(values = c(1, 2, 3, 4)) +  
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5)) +
+  labs(size="linoleic classes") 
+
+
+ggplot(df_olive, aes(x = oleic, y = palmitic)) +
+geom_point() +
+  geom_spoke(aes(angle = as.numeric(linoleic_classes)), radius = 30) +
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5)) 
+
+
+# Task 1.3
+ggplot(df_olive) +
+  geom_point(aes(x = oleic, y = eicosenoic, color = Region)) + 
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5))
+
+ggplot(df_olive) +
+  geom_point(aes(x = oleic, y = eicosenoic, color = as.factor(Region))) + 
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5)) +
+  labs(color="Region")  
+
+
+# Task 1.4
+df_olive$linoleic_classes <- cut_interval(df_olive$linoleic, n=3)
+df_olive$palmitic_classes <- cut_interval(df_olive$palmitic, n=3)
+df_olive$palmitoleic_classes <- cut_interval(df_olive$palmitoleic, n=3)
+
+levels(df_olive$palmitic_classes) <- c("[610,991]", "(991,1370]", "(1370,1750]")
+levels(df_olive$linoleic_classes) <- c("[448,789]", "(789,1130]","(1130,1470]")
+
+
+ggplot(df_olive) +
+  geom_point(aes(x = oleic,
+                 y = eicosenoic,
+                 color = linoleic_classes,
+                 shape = palmitic_classes,
+                 size = palmitoleic_classes)) + 
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5)) +
+  labs(color = "linoleic classes",
+       shape = "palmitic classes",
+       size = "palmitoleic classes") 
+
+
+# Task 1.5
+ggplot(df_olive) +
+  geom_point(aes(x = oleic,
+                 y = eicosenoic,
+                 color = as.factor(Region),
+                 shape = palmitic_classes,
+                 size = palmitoleic_classes)) + 
+  theme_bw() +
+  theme(axis.title.y = element_text(angle=0, vjust=0.5)) +
+  labs(color = "Region",
+       shape = "palmitic classes",
+       size = "palmitoleic classes") 
+
+
+# Task 1.6
+# Create dataframe for plotly
+df_olive$Area <- as.factor(df_olive$Area)
+data_plotly <- as.data.frame(table(df_olive$Area))
+colnames(data_plotly) <- c("Region", "Freq")
+
+
+plot_ly(data = data_plotly,
+        labels = ~Region,
+        values = ~Freq, 
+        showlegend = F,
+        textinfo = "none") %>%
+  add_pie()
+
+
+# Task 1.7
+p1 <- 
+  ggplot(df_olive, aes(x = linoleic, y = eicosenoic)) +
+  geom_density_2d() +
+  theme_bw() +
+  scale_y_continuous(limits=c(0,60))
+
+p2 <-
+  ggplot(df_olive, aes(x = linoleic, y = eicosenoic), alpha = 0.5) +
+  geom_point() +
+  theme_bw() +
+  scale_y_continuous(limits=c(0,60))
+
+
+plot_list = list(p1, p2)
+
+# Layout to plot
+layout_matrix <- rbind(c(1,2))
+grid.arrange(grobs=plot_list[1:2], layout_matrix=layout_matrix)
+
+
+# Task 2.1
+df_baseball <- read_xlsx("baseball-2016.xlsx")
+colnames(df_baseball)[10] <- "TwoB"
+colnames(df_baseball)[11] <- "ThreeB"
+
+
+# Task 2.2
+df_baseball[ , 3:28] <- scale(df_baseball[ , 3:28])
+
+d <- dist(df_baseball[, 3:28], method = "minkowski", p=2)
+res <- isoMDS(d,k=2, p=2, trace=FALSE)
+coords <- res$points
+
+coordsMDS <- as.data.frame(coords)
+coordsMDS$name <- rownames(coordsMDS)
+coordsMDS$team <- df_baseball$Team
+coordsMDS$league <- df_baseball$League
+
+plot_ly(coordsMDS, 
+        x=~V1, 
+        y=~V2, 
+        type="scatter",
+        hovertext=~team,
+        color= ~league,
+        colors = "Set2",
+        mode= "markers") %>% 
+  layout(legend = list(title=list(text="League")),
+         xaxis = list(title = "Dimension 1"),
+         yaxis = list(title = "Dimension 2"))
+
+
+# Task 2.3
+sh <- Shepard(d, coords)
+delta <-as.numeric(d)
+D<- as.numeric(dist(coords))
+
+n=nrow(coords)
+index=matrix(1:n, nrow=n, ncol=n)
+index1=as.numeric(index[lower.tri(index)])
+
+n=nrow(coords)
+index=matrix(1:n, nrow=n, ncol=n, byrow = T)
+index2=as.numeric(index[lower.tri(index)])
+
+
+
+plot_ly()%>%
+  add_markers(x=~delta, y=~D, hoverinfo = 'text',
+              text = ~paste('Obj1: ', df_baseball$Team[index1],
+                            '<br> Obj 2: ', df_baseball$Team[index2]))%>%
+  #if nonmetric MDS inolved
+  add_lines(x=~sh$x, y=~sh$yf)
+
+
+# Task 2.4
+df_baseball$V2 <- coordsMDS$V2
+plot_data <- df_baseball[, c(-1,-2)]
+
+plot_var <- function(y1){
+  plot <- 
+    ggplot(plot_data, aes_string(x="V2", y=y1)) + 
+    geom_point() +
+    xlab("Dimension 2") +
+    theme_bw() 
+  return(plot)
+}
+
+plot_list <- vector("list", 26)
+for(index in 1:26){
+  plot_list[[index]] <- plot_var(names(plot_data)[index])
+}
+
+
+layout_matrix <- layout_matrix <- rbind(c(1,2),
+                                        c(3,4))
+grid.arrange(grobs=plot_list[1:4],
+             layout_matrix=layout_matrix)
+
+grid.arrange(grobs=plot_list[5:8],
+             layout_matrix=layout_matrix)
+
+grid.arrange(grobs=plot_list[9:12],
+             layout_matrix=layout_matrix)
+
+grid.arrange(grobs=plot_list[13:16],
+             layout_matrix=layout_matrix)
+
+grid.arrange(grobs=plot_list[17:20],
+             layout_matrix=layout_matrix)
+
+grid.arrange(grobs=plot_list[21:24],
+             layout_matrix=layout_matrix)
+
+grid.arrange(grobs=plot_list[25:26],
+             layout_matrix=layout_matrix)
+```
+
+
+
